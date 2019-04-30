@@ -2,7 +2,7 @@
 # @Author: Leo
 # @Date:   2019-03-29 21:12:04
 # @Last Modified by:   Leo Toikka
-# @Last Modified time: 2019-04-30 13:11:12
+# @Last Modified time: 2019-04-30 13:15:20
 
 import pandas as pd
 import numpy as np
@@ -40,7 +40,6 @@ def getData():
 
         weather_df = weather_df.drop(columns=['Aikavyöhyke', 'Vuosi', 'Kk', 'Pv', 'Klo', 'year', 'month', 'day'])
         weather_df = weather_df.fillna(0)
-        print(weather_df.head())
 
         # Only use these stations as train departure stations
         allowed_stations = weather_df['stationName'].unique()
