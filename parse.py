@@ -51,14 +51,18 @@ if __name__ == '__main__':
 
     # Read trains JSON data
     for file in glob('traindata/digitraffic-rata-trains-*.zip'):
+        print("Opening train data archive {}...".format(file))
         zip_file = ZipFile(file)
         for json_file in zip_file.infolist():
+            print("Working on file {}...".format(json_file.filename))
             df = pd.io.json.read_json(zip_file.open(json_file.filename))
-
             # We are only interested in trains that can be publicly used, because it doesn't matter if e.g. service trains are late
             df = df[df['trainCategory'].isin(['Commuter', 'Long-distance'])]
-
+            total_trains = len(df)
+            current_train = 0
             for train in df.itertuples():
+                current_train += 1
+                print("---> Train {}/{}".format(current_train, total_trains), end="\r")
                 train_type = train.trainType
                 train_category = train.trainCategory
                 timetable_rows = pd.DataFrame(train.timeTableRows)
@@ -98,6 +102,6 @@ if __name__ == '__main__':
                     row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)'].values[0]
 
                     X.append(row)
-
+            print()
     pd.DataFrame(X).to_csv(X_filename)
     pd.DataFrame(y, columns=['averageDelayInMinutes']).to_csv(y_filename)
