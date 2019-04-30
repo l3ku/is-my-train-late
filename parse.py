@@ -53,11 +53,15 @@ if __name__ == '__main__':
     allowed_stations = weather_df['stationName'].unique()
 
     # Read trains JSON data
+    glob_index = 0
     for file in glob('traindata/digitraffic-rata-trains-*.zip'):
-        print("Opening train data archive {}...".format(file))
+        glob_index += 1
+        print("- Opening train data archive {} ({}/{})...".format(file, glob_index, len(glob('traindata/digitraffic-rata-trains-*.zip'))))
         zip_file = ZipFile(file)
+        json_file_index = 0
         for json_file in zip_file.infolist():
-            print("Working on file {}...".format(json_file.filename))
+            json_file_index += 1
+            print("  - Working on file {} ({}/{})...".format(json_file.filename, json_file_index, len(zip_file.infolist())))
             df = pd.io.json.read_json(zip_file.open(json_file.filename))
             # We are only interested in trains that can be publicly used, because it doesn't matter if e.g. service trains are late
             df = df[df['trainCategory'].isin(['Commuter', 'Long-distance'])]
@@ -65,7 +69,7 @@ if __name__ == '__main__':
             current_train = 0
             for train in df.itertuples():
                 current_train += 1
-                print("---> Train {}/{}".format(current_train, total_trains), end="\r")
+                print("    - Train {}/{}".format(current_train, total_trains), end="\r")
                 train_type = train.trainType
                 train_category = train.trainCategory
                 timetable_rows = pd.DataFrame(train.timeTableRows)
@@ -82,7 +86,6 @@ if __name__ == '__main__':
                 how_late_on_average = 0
                 if 'differenceInMinutes' in timetable_rows.columns:
                     how_late_on_average = timetable_rows['differenceInMinutes'].mean()
-                y.append(how_late_on_average)
 
                 timetable_rows['scheduledTime'] = timetable_rows['scheduledTime'].astype('datetime64[ns]')
                 departure_time = timetable_rows['scheduledTime'][0]
@@ -105,6 +108,7 @@ if __name__ == '__main__':
                     row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)'].values[0]
 
                     X.append(row)
+                    y.append(how_late_on_average)
             print()
     pd.DataFrame(X).to_csv(X_filename)
     pd.DataFrame(y, columns=['averageDelayInMinutes']).to_csv(y_filename)
