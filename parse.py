@@ -11,8 +11,6 @@ from zipfile import ZipFile
 import os
 
 def getData():
-    y = [] # y will contain the mean amount that the train is late during its trip
-    X = [] # X will contain information about the date, train model, train category, total trip duration and weather conditions.
     y_filename = 'y.csv'
     X_filename = 'X.csv'
 
@@ -28,6 +26,9 @@ def getData():
 
 
 if __name__ == '__main__':
+    y = [] # y will contain the mean amount that the train is late during its trip
+    X = [] # X will contain information about the date, train model, train category, total trip duration and weather conditions.
+
     # Read the weather from known stations
     weather_df = pd.DataFrame()
     for file in glob('weatherdata/*'):
