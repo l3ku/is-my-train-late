@@ -2,7 +2,7 @@
 # @Author: Leo
 # @Date:   2019-03-29 21:12:04
 # @Last Modified by:   Leo Toikka
-# @Last Modified time: 2019-05-01 09:09:04
+# @Last Modified time: 2019-05-01 09:55:32
 
 import pandas as pd
 import numpy as np
@@ -102,14 +102,16 @@ if __name__ == '__main__':
                 departure_station_weather = weather_df.loc[weather_df['stationName'] == departure_station]
                 date_diff = weather_df['date'] - departure_time
                 indexmax = date_diff[date_diff < pd.to_timedelta(0)].idxmax()
-                weather_closest_to_departure = departure_station_weather.iloc[indexmax]
 
-                row['rainIntensity'] = weather_closest_to_departure['Sateen intensiteetti (mm/h)']
-                row['snowDepth'] = weather_closest_to_departure['Lumensyvyys (cm)']
-                row['temperature'] = weather_closest_to_departure['Ilman lämpötila (degC)']
-                row['visibility'] = weather_closest_to_departure['Näkyvyys (m)']
-                row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)']
-                data.append(row)
+                if indexmax < len(departure_station_weather):
+                    weather_closest_to_departure = departure_station_weather.iloc[indexmax]
+
+                    row['rainIntensity'] = weather_closest_to_departure['Sateen intensiteetti (mm/h)']
+                    row['snowDepth'] = weather_closest_to_departure['Lumensyvyys (cm)']
+                    row['temperature'] = weather_closest_to_departure['Ilman lämpötila (degC)']
+                    row['visibility'] = weather_closest_to_departure['Näkyvyys (m)']
+                    row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)']
+                    data.append(row)
 
     df = pd.DataFrame(data).dropna().reset_index(drop=True)
     y = df['averageDelayInMinutes'].to_frame()
