@@ -2,7 +2,7 @@
 # @Author: Leo
 # @Date:   2019-03-29 21:12:04
 # @Last Modified by:   Leo Toikka
-# @Last Modified time: 2019-05-01 09:55:32
+# @Last Modified time: 2019-05-01 22:32:22
 
 import pandas as pd
 import numpy as np
@@ -63,7 +63,7 @@ if __name__ == '__main__':
             # We are only interested in trains that can be publicly used, because it doesn't matter if e.g. service trains are late
             df = df[df['trainCategory'].isin(['Commuter', 'Long-distance'])]
 
-            # We are only interested in common public train types IC, S and P
+            # We are only interested in common public train types IC, P and S
             df = df[df['trainType'].isin(['IC', 'S', 'P'])]
 
             # We need to have at least 2 stations
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                     row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)']
                     data.append(row)
 
-    df = pd.DataFrame(data).dropna().reset_index(drop=True)
+    df = pd.DataFrame(data)
     y = df['averageDelayInMinutes'].to_frame()
     X = df.drop(columns='averageDelayInMinutes')
 
