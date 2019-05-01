@@ -2,7 +2,7 @@
 # @Author: Leo
 # @Date:   2019-03-29 21:12:04
 # @Last Modified by:   Leo Toikka
-# @Last Modified time: 2019-04-30 14:03:10
+# @Last Modified time: 2019-05-01 08:34:23
 
 import pandas as pd
 import numpy as np
@@ -65,6 +65,10 @@ if __name__ == '__main__':
             df = pd.io.json.read_json(zip_file.open(json_file.filename))
             # We are only interested in trains that can be publicly used, because it doesn't matter if e.g. service trains are late
             df = df[df['trainCategory'].isin(['Commuter', 'Long-distance'])]
+
+            # We are only interested in common public train types IC, S and P
+            df = df[df['trainType'].isin(['IC', 'S', 'P'])]
+
             total_trains = len(df)
             current_train = 0
             for train in df.itertuples():
