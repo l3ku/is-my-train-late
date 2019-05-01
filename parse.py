@@ -2,7 +2,7 @@
 # @Author: Leo
 # @Date:   2019-03-29 21:12:04
 # @Last Modified by:   Leo Toikka
-# @Last Modified time: 2019-05-01 08:34:23
+# @Last Modified time: 2019-05-01 09:09:04
 
 import pandas as pd
 import numpy as np
@@ -26,9 +26,7 @@ def getData():
 
 
 if __name__ == '__main__':
-    y = [] # y will contain the mean amount that the train is late during its trip
-    X = [] # X will contain information about the date, train model, train category, total trip duration and weather conditions.
-
+    data = []
     y_filename = 'y.csv'
     X_filename = 'X.csv'
 
@@ -47,7 +45,6 @@ if __name__ == '__main__':
     weather_df['date'] = pd.to_datetime(weather_df[['year', 'month', 'day']]) + pd.to_timedelta(weather_df['Klo'] + ':00') + pd.DateOffset(hours=2)
 
     weather_df = weather_df.drop(columns=['Aikavyöhyke', 'Vuosi', 'Kk', 'Pv', 'Klo', 'year', 'month', 'day'])
-    weather_df = weather_df.fillna(0)
 
     # Only use these stations as train departure stations
     allowed_stations = weather_df['stationName'].unique()
@@ -69,6 +66,9 @@ if __name__ == '__main__':
             # We are only interested in common public train types IC, S and P
             df = df[df['trainType'].isin(['IC', 'S', 'P'])]
 
+            # We need to have at least 2 stations
+            df = df[df['timeTableRows'].apply(lambda x: len(x) >= 2)]
+
             total_trains = len(df)
             current_train = 0
             for train in df.itertuples():
@@ -77,10 +77,6 @@ if __name__ == '__main__':
                 train_type = train.trainType
                 train_category = train.trainCategory
                 timetable_rows = pd.DataFrame(train.timeTableRows)
-
-                # We need to have at least 2 stations
-                if len(timetable_rows) < 2:
-                    continue
 
                 departure_station = timetable_rows.iloc[0]['stationShortCode']
                 if departure_station not in allowed_stations:
@@ -98,21 +94,26 @@ if __name__ == '__main__':
                     'departureTime': departure_time,
                     'type': train_type,
                     'tripDuration': how_long_trip.total_seconds()/60,
-                    'departureStation': departure_station
+                    'departureStation': departure_station,
+                    'averageDelayInMinutes': how_late_on_average
                 }
 
                 # Find the closest weather measurement time of the departure station
                 departure_station_weather = weather_df.loc[weather_df['stationName'] == departure_station]
-                weather_closest_to_departure = departure_station_weather.loc[departure_station_weather['date'] == departure_time.round('H')]
-                if len(weather_closest_to_departure) == 1:
-                    row['rainIntensity'] = weather_closest_to_departure['Sateen intensiteetti (mm/h)'].values[0]
-                    row['snowDepth'] = weather_closest_to_departure['Lumensyvyys (cm)'].values[0]
-                    row['temperature'] = weather_closest_to_departure['Ilman lämpötila (degC)'].values[0]
-                    row['visibility'] = weather_closest_to_departure['Näkyvyys (m)'].values[0]
-                    row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)'].values[0]
+                date_diff = weather_df['date'] - departure_time
+                indexmax = date_diff[date_diff < pd.to_timedelta(0)].idxmax()
+                weather_closest_to_departure = departure_station_weather.iloc[indexmax]
 
-                    X.append(row)
-                    y.append(how_late_on_average)
-            print()
-    pd.DataFrame(X).to_csv(X_filename)
-    pd.DataFrame(y, columns=['averageDelayInMinutes']).to_csv(y_filename)
+                row['rainIntensity'] = weather_closest_to_departure['Sateen intensiteetti (mm/h)']
+                row['snowDepth'] = weather_closest_to_departure['Lumensyvyys (cm)']
+                row['temperature'] = weather_closest_to_departure['Ilman lämpötila (degC)']
+                row['visibility'] = weather_closest_to_departure['Näkyvyys (m)']
+                row['windSpeed'] = weather_closest_to_departure['Tuulen nopeus (m/s)']
+                data.append(row)
+
+    df = pd.DataFrame(data).dropna().reset_index(drop=True)
+    y = df['averageDelayInMinutes'].to_frame()
+    X = df.drop(columns='averageDelayInMinutes')
+
+    X.to_csv(X_filename)
+    y.to_csv(y_filename)
